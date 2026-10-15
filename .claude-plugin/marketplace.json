@@ -1,0 +1,5 @@
+{
+  "name": "toggle-color",
+  "owner": { "name": "stakiran" },
+  "plugins": [{ "name": "toggle-color", "source": "./" }]
+}

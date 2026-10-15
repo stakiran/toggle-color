@@ -1,0 +1,6 @@
+# このディレクトリで scope local で入れて試す用
+.claude/settings.local.json
+# --plugin-dir での動作確認用
+tsconfig.json
+# エンジンがロード時に書き出す型定義
+.claude-plugin/types/
