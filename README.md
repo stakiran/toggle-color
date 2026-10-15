@@ -1,4 +1,5 @@
 # toggle-color
+<img width="718" height="395" alt="Image" src="https://github.com/user-attachments/assets/dab554cf-74a4-4494-b5a9-654f768cd5de" />
 
 プロンプトの上の帯に色付きのストライプを表示し、ボタンを押すたびに色を切り替える Claude Code MOD。色がある間は、会話の中の Claude の回答の左にも同じ色の縦線が付きます。
 
