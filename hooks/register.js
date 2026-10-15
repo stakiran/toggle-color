@@ -15,6 +15,7 @@ let index = 0
 
 function setIndex($, next) {
   index = next
+  // 帯も会話の各行も描き直す
   $.ui.invalidate('ui.render')
 }
 
@@ -48,43 +49,61 @@ export function register(on) {
     return { text: `色: ${COLORS[index].name}` }
   })
 
-  // プロンプト上の帯に、色付きのストライプとトグルボタンを描く
+  // プロンプト上の帯に、トグルボタンと色付きのストライプを描く
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    // 他の mod が帯に描いたものは残す
+    // 他の mod が帯に描いたもの(open-latest のボタンなど)は同じ行の左側に残す
     const others = await next(e)
     // アンケートが帯を使っている間は譲る
     if (e.props.hasSurvey) return others
 
     const { Box, Text, Button } = $.ui.resolve(e)
-    const { name, color } = COLORS[index]
+    const { color } = COLORS[index]
 
-    const label = `color: ${name}`
+    // ラベルは固定の "color" だけにする(色名を入れると幅が変わって並びがずれる)
     const button = Button({
       key: 'toggle-color',
-      label,
+      label: 'color',
       plain: true,
       dimColor: true,
       onPress: () => cycle($),
     })
 
-    const children = [button]
+    // 他 mod の描画とボタンは縮ませない(ストライプが余白を食ってずれていた)
+    // 他 mod の描画との間は 2 桁あける(columnGap は入れ子の Box との間で効かなかった)
+    const children = [Box({ flexShrink: 0, marginLeft: others ? 2 : 0, children: [button] })]
+    if (others) children.unshift(Box({ flexShrink: 0, children: [others] }))
     if (color) {
-      // ボタンの右側を帯の端まで塗りつぶす
-      const width = Math.max(1, (e.props.bodyColumns ?? 40) - label.length - 1)
+      // ボタンの右側を帯の端まで塗りつぶす。残り幅いっぱいに伸び、はみ出す分は隠す
       children.push(
-        Text({
+        Box({
+          flexGrow: 1,
+          flexShrink: 1,
+          overflow: 'hidden',
+          marginLeft: 1,
           backgroundColor: color,
-          wrap: 'truncate-end',
-          children: ' '.repeat(width),
+          children: [Text({ backgroundColor: color, wrap: 'truncate-end', children: ' ' })],
         }),
       )
     }
 
-    const row = Box({ flexDirection: 'row', columnGap: 1, children })
+    return Box({ flexDirection: 'row', children })
+  })
 
+  // 会話の中の Claude の回答ブロックの左に、色付きの縦線を付ける
+  // (ペインを切り替えるとき、画面は回答で終わっていることが多いので、回答側に色を付ける)
+  on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
+    const row = await next(e)
+    const { color } = COLORS[index]
+    if (!color || !row) return row
+
+    const { Box } = $.ui.resolve(e)
+    // 幅 1 桁の Box に背景色を付ける。行方向の Box の子は高さが揃うので、回答の全行にわたる
     return Box({
-      flexDirection: 'column',
-      children: others ? [row, others] : [row],
+      flexDirection: 'row',
+      children: [
+        Box({ width: 1, flexShrink: 0, backgroundColor: color }),
+        Box({ flexGrow: 1, children: [row] }),
+      ],
     })
   })
 }
